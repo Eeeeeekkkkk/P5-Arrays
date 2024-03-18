@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P5 + Arrays</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 100%);
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    let lines = [];
+    let smallerObjects = [];
+    let glowingDots = [];
+    let backgroundColor;
+
+    function setup() {
+      createCanvas(1200, 800);
+      backgroundColor = color(0);
+      generateLines();
+      generateSmallerObjects();
+      generateGlowingDots();
+    }
+
+    function draw() {
+      // Background effect
+      backgroundColor = lerpColor(color(0), color(20, 10, 50), mouseY / height);
+      background(backgroundColor);
+
+      // glowing dots
+      for (let i = 0; i < glowingDots.length; i++) {
+        glowingDots[i].update();
+        glowingDots[i].display();
+      }
+
+      // Display lines
+      for (let i = 0; i < lines.length; i++) {
+        lines[i].display();
+      }
+
+      // smaller objects
+      for (let i = smallerObjects.length - 1; i >= 0; i--) {
+        smallerObjects[i].update();
+        smallerObjects[i].display();
+        if (smallerObjects[i].lifespan <= 0) {
+          smallerObjects.splice(i, 1);
+        }
+      }
+      
+      // objects around lines 
+      if (frameCount % 30 === 0) {
+        generateSmallerObjects();
+      }
+    }
+
+    function generateLines() {
+      for (let i = 0; i < 100; i++) {
+        let centerX = width / 2;
+        let centerY = height / 2;
+        let endX = centerX + random(-400, 400); 
+        let endY = centerY + random(-400, 400); 
+        let color1 = color(random(255), random(255), random(255), 100);
+        let color2 = color(random(255), random(255), random(255), 100);
+        lines.push(new Line(centerX, centerY, endX, endY, color1, color2));
+      }
+    }
+
+    function generateSmallerObjects() {
+      for (let i = 0; i < 50; i++) {
+        let lineIndex = floor(random(lines.length));
+        let x = lines[lineIndex].x1 + random(-10, 10);
+        let y = lines[lineIndex].y1 + random(-10, 10);
+        let lifespan = random(255);
+        let velocity = createVector(random(-1, 1), random(-1, 1));
+        smallerObjects.push(new SmallerObject(x, y, lifespan, velocity));
+      }
+    }
+
+    function generateGlowingDots() {
+      for (let i = 0; i < 200; i++) {
+        let x = random(width);
+        let y = random(height);
+        let size = random(2, 6);
+        glowingDots.push(new GlowingDot(x, y, size));
+      }
+    }
+
+    class Line {
+      constructor(x1, y1, x2, y2, c1, c2) {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
+        this.c1 = c1;
+        this.c2 = c2;
+      }
+
+      display() {
+        strokeWeight(2);
+        stroke(lerpColor(this.c1, this.c2, map(mouseX, 0, width, 0, 1)));
+        line(this.x1, this.y1, this.x2, this.y2);
+      }
+    }
+
+    class SmallerObject {
+      constructor(x, y, lifespan, velocity) {
+        this.position = createVector(x, y);
+        this.velocity = velocity;
+        this.lifespan = lifespan;
+      }
+
+      update() {
+        this.position.add(this.velocity);
+        this.lifespan -= 1;
+      }
+
+      display() {
+        noStroke();
+        fill(255, this.lifespan);
+        ellipse(this.position.x, this.position.y, 4, 4);
+      }
+    }
+
+    class GlowingDot {
+      constructor(x, y, size) {
+        this.position = createVector(x, y);
+        this.size = size;
+        this.offsetX = random(100);
+        this.offsetY = random(100);
+      }
+
+      update() {
+        // Glitching effect
+        if (random(1) < 0.05) {
+          this.position.x += random(-5, 5);
+          this.position.y += random(-5, 5);
+        }
+      }
+
+      display() {
+        noStroke();
+        fill(random(100, 255), random(100, 255), random(100, 255), 150);
+        ellipse(this.position.x + sin(frameCount * 0.05 + this.offsetX) * 10, 
+                this.position.y + cos(frameCount * 0.05 + this.offsetY) * 10, 
+                this.size, this.size);
+      }
+    }
+  </script>
+</body>
+</html>
